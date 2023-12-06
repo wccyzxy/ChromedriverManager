@@ -1,5 +1,7 @@
 # Chromedriver Manager
 
+## Crates.io
+https://crates.io/crates/chromedriver-manager
 
 ```rs
 use thirtyfour::prelude::*;
