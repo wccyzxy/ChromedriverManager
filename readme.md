@@ -3,6 +3,7 @@
 ## Crates.io
 https://crates.io/crates/chromedriver-manager
 
+## Example
 ```rs
 use thirtyfour::prelude::*;
 
