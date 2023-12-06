@@ -1,5 +1,5 @@
 [package]
-name = "ChromedriverManager"
+name = "chromedriver-manager"
 description = "A Rust library for downloading and managing ChromeDrivers."
 homepage = "https://github.com/Sw1ndlers/ChromedriverManager"
 keywords = ["chromedriver", "thirtyfour"]
