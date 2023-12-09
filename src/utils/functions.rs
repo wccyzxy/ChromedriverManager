@@ -22,19 +22,24 @@ pub fn get_latest_chrome_package(chrome_packages: &Vec<ChromePackage>) -> Option
     latest_package
 }
 
-pub async fn create_progressbar(length: u64) -> ProgressBar {
+pub async fn create_progressbar(length: u64, msg: String) -> ProgressBar {
     let pb = ProgressBar::new(length);
     pb.set_style(ProgressStyle::default_bar()
         .template("{msg}\n{spinner:.green} [{elapsed_precise}] [{wide_bar:.cyan/blue}] {bytes}/{total_bytes} ({bytes_per_sec}, {eta})").unwrap()
         .progress_chars("#>-")
     );
+    pb.set_message(msg);
 
     pb
 }
 
-pub async fn write_file(mut file: &File, mut response: reqwest::Response) -> anyhow::Result<()> {
+pub async fn write_file(
+    mut file: &File,
+    mut response: reqwest::Response,
+    msg: String,
+) -> anyhow::Result<()> {
     let file_size = response.content_length().unwrap_or(0);
-    let progress_bar = create_progressbar(file_size).await;
+    let progress_bar = create_progressbar(file_size, msg).await;
 
     while let Some(chunk) = response.chunk().await? {
         file.write_all(&chunk)?;

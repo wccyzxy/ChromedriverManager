@@ -1,5 +1,6 @@
 use crate::{
     structs::chrome::{ChromeDownload, DriverDownload},
+    utils::appdata::get_cache_dir,
     utils::functions::write_file,
 };
 
@@ -18,13 +19,12 @@ pub async fn download_chromedriver(
 
     let file = File::create(&driver_path)?;
 
-    println!("Downloading chromedriver...");
-    write_file(&file, response).await?;
+    write_file(&file, response, "Downloading Chromedriver...".to_string()).await?;
 
-    println!("Extracting chromedriver...");
-    zip_extract(&driver_path, &PathBuf::from(".")).unwrap();
+    println!("Extracting Chromedriver...");
+    zip_extract(&driver_path, &get_cache_dir()).unwrap();
 
-    println!("Downloaded chromedriver\n");
+    println!("Completed Chromedriver Download");
 
     // Delete zip file
     fs::remove_file(&driver_path).unwrap();
@@ -41,13 +41,12 @@ pub async fn download_chrome(
 
     let file = File::create(&chrome_path)?;
 
-    println!("Downloading chrome...");
-    write_file(&file, response).await?;
+    write_file(&file, response, "Downloading Chrome".to_string()).await?;
 
-    println!("Extracting chrome...");
-    zip_extract(&chrome_path, &PathBuf::from(".")).unwrap();
+    println!("Extracting Chrome...");
+    zip_extract(&chrome_path, &get_cache_dir()).unwrap();
 
-    println!("Downloaded chrome\n");
+    println!("Completed Chrome Download");
 
     // Delete zip file
     fs::remove_file(&chrome_path).unwrap();
