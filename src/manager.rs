@@ -1,15 +1,18 @@
-use crate::structs::{
-    chrome::{ChromeDownload, DriverDownload},
-    packages::ChromePackage,
-};
 use crate::utils::{
     appdata::get_cache_dir,
     downloader::{download_chrome, download_chromedriver},
     functions::get_latest_chrome_package,
     version::Version,
 };
+use crate::{
+    structs::{
+        chrome::{ChromeDownload, DriverDownload},
+        packages::ChromePackage,
+    },
+    utils::loglevel::LogLevel,
+};
 
-use std::{path::PathBuf, process::Command};
+use std::{os::windows::process::CommandExt, path::PathBuf, process::Command};
 use thirtyfour::ChromeCapabilities;
 
 const CHROME_DOWNLOADS_URL: &str =
@@ -120,8 +123,8 @@ impl Handler {
     pub async fn launch_chromedriver(
         &mut self,
         capabilities: &mut ChromeCapabilities,
-        chromedriver_output: bool,
         port: &str,
+        loglevel: LogLevel,
     ) -> anyhow::Result<()> {
         self.client = reqwest::Client::new();
 
@@ -142,38 +145,41 @@ impl Handler {
 
         capabilities.set_binary(chrome_exe.to_str().unwrap())?;
 
+        // TODO: Make creation_flags only apply to Windows
 
-        if chromedriver_output {
-            Command::new(chromedriver_exe.to_str().unwrap())
-                .arg(format!("--port={}", port))
-                .spawn()?;
-        } else {
-            Command::new(chromedriver_exe.to_str().unwrap())
-                .arg(format!("--port={}", port))
-                .stderr(std::process::Stdio::null())
-                .stdout(std::process::Stdio::null())
-                .spawn()?;
+        let chromedriver_exe = chromedriver_exe.to_str().unwrap();
+
+        let mut command = Command::new(chromedriver_exe);
+        let mut command = command
+            .arg(format!("--port={}", port))
+            .arg(format!("--log-level={}", loglevel.to_string()));
+
+        // TODO: Make only available on Windows
+        if loglevel == LogLevel::Off {
+            command = command.creation_flags(0x08000000);
         }
 
+        command.spawn()?;
         Ok(())
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::manager::Handler;
+    use crate::{manager::Handler, utils::loglevel::LogLevel};
     use thirtyfour::prelude::*;
 
     #[tokio::test]
     async fn test_launch_chromedriver() -> anyhow::Result<()> {
         let mut caps = DesiredCapabilities::chrome();
+        caps.set_headless()?;
 
         Handler::new()
-            .launch_chromedriver(&mut caps, false, "9515")
+            .launch_chromedriver(&mut caps, "9515", LogLevel::Off)
             .await?;
 
         let driver = WebDriver::new("http://localhost:9515", caps).await?;
-        driver.goto("https://www.twitch.tv/").await?;
+        driver.goto("https://www.gimkit.com/join").await?;
 
         std::thread::sleep(std::time::Duration::from_secs(10));
 

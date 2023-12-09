@@ -4,10 +4,7 @@ use crate::{
     utils::functions::write_file,
 };
 
-use std::{
-    fs::{self, File},
-    path::PathBuf,
-};
+use std::fs::{self, File};
 use zip_extensions::zip_extract;
 
 pub async fn download_chromedriver(
