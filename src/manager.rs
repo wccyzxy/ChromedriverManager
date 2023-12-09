@@ -9,7 +9,7 @@ use crate::{
         chrome::{ChromeDownload, DriverDownload},
         packages::ChromePackage,
     },
-    utils::loglevel::LogLevel,
+    loglevel::LogLevel,
 };
 
 use std::{os::windows::process::CommandExt, path::PathBuf, process::Command};
@@ -166,7 +166,7 @@ impl Handler {
 
 #[cfg(test)]
 mod tests {
-    use crate::{manager::Handler, utils::loglevel::LogLevel};
+    use crate::{manager::Handler, loglevel::LogLevel};
     use thirtyfour::prelude::*;
 
     #[tokio::test]
