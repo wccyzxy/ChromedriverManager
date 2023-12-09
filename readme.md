@@ -1,6 +1,9 @@
 # Chromedriver Manager
 
+## Crates.io
+https://crates.io/crates/chromedriver-manager
 
+## Example
 ```rs
 use thirtyfour::prelude::*;
 
@@ -22,6 +25,12 @@ async fn main() -> anyhow::Result<()> {
 
     Ok(())
 }
+```
+
+### Todo
+```
+[+] Make platform compatable
+[+] Make auto updater + option to set version
 ```
 
 ### Todo
