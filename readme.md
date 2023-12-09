@@ -8,7 +8,8 @@ https://crates.io/crates/chromedriver-manager
 use thirtyfour::prelude::*;
 
 // Require the Handler
-use chromedriver_manager::manager::Handler; 
+
+use chromedriver_manager::{manager::Handler, loglevel::LogLevel};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -17,7 +18,7 @@ async fn main() -> anyhow::Result<()> {
 
     // Launch chromedriver on port 9515 
     Handler::new()
-        .launch_chromedriver(&mut caps, true, "9515") 
+        .launch_chromedriver(&mut caps, "9515", LogLevel::Off)
         .await?;
 
     // Connect to chrome on the same port
@@ -27,7 +28,7 @@ async fn main() -> anyhow::Result<()> {
 }
 ```
 
-### Todo
+## Todo
 ```
 [+] Make platform compatable
 [+] Make auto updater + option to set version
