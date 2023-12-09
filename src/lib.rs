@@ -3,6 +3,7 @@ mod structs {
     pub mod packages;
 }
 mod utils {
+    pub mod appdata;
     pub mod downloader;
     pub mod functions;
     pub mod version;

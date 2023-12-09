@@ -1,3 +1,4 @@
+use crate::utils::appdata::get_cache_dir;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
@@ -19,11 +20,17 @@ impl DriverDownload {
     }
 
     pub fn to_zip_path(&self) -> PathBuf {
-        PathBuf::from(self.get_file_name()).with_extension("zip")
+        let relative = PathBuf::from(self.get_file_name()).with_extension("zip");
+        let absolute = get_cache_dir().join(relative);
+
+        absolute
     }
 
     pub fn to_folder_path(&self) -> PathBuf {
-        PathBuf::from(self.get_file_name())
+        let relative = PathBuf::from(self.get_file_name());
+        let absolute = get_cache_dir().join(relative);
+
+        absolute
     }
 }
 
@@ -33,10 +40,16 @@ impl ChromeDownload {
     }
 
     pub fn to_zip_path(&self) -> PathBuf {
-        PathBuf::from(self.get_file_name()).with_extension("zip")
+        let relative = PathBuf::from(self.get_file_name()).with_extension("zip");
+        let absolute = get_cache_dir().join(relative);
+
+        absolute
     }
 
     pub fn to_folder_path(&self) -> PathBuf {
-        PathBuf::from(self.get_file_name())
+        let relative = PathBuf::from(self.get_file_name());
+        let absolute = get_cache_dir().join(relative);
+
+        absolute
     }
 }
