@@ -3,12 +3,13 @@ use crate::structs::{
     packages::ChromePackage,
 };
 use crate::utils::{
+    appdata::get_cache_dir,
     downloader::{download_chrome, download_chromedriver},
     functions::get_latest_chrome_package,
     version::Version,
 };
 
-use std::{process::Command, path::PathBuf};
+use std::{path::PathBuf, process::Command};
 use thirtyfour::ChromeCapabilities;
 
 const CHROME_DOWNLOADS_URL: &str =
@@ -26,9 +27,10 @@ impl Handler {
         }
     }
 
+    // TODO: Make appdata configurable
     fn get_default_paths(&self) -> (PathBuf, PathBuf) {
-        let chrome_path = PathBuf::from("chrome-win64");
-        let driver_path = PathBuf::from("chromedriver-win64");
+        let chrome_path = get_cache_dir().join("chrome-win64");
+        let driver_path = get_cache_dir().join("chromedriver-win64");
 
         (chrome_path, driver_path)
     }
@@ -41,7 +43,7 @@ impl Handler {
             return true;
         }
 
-        return false
+        return false;
     }
 
     async fn get_packages(&self) -> anyhow::Result<Vec<ChromePackage>> {
@@ -83,12 +85,13 @@ impl Handler {
         );
 
         download_chrome(&self.client, chrome).await?;
+        print!("\n");
         download_chromedriver(&self.client, driver).await?;
 
         Ok(())
     }
 
-    async fn get_info(&self) -> anyhow::Result<(PathBuf, PathBuf)> {
+    async fn get_info_and_download(&self) -> anyhow::Result<(PathBuf, PathBuf)> {
         let chrome_packages = self.get_packages().await?;
         let selected_package = self.get_selected_package(&chrome_packages).await?;
 
@@ -111,12 +114,13 @@ impl Handler {
         let chrome_path = chrome_download.to_folder_path();
         let driver_path = chromedriver_download.to_folder_path();
 
-        return Ok((chrome_path, driver_path))
+        return Ok((chrome_path, driver_path));
     }
-    
+
     pub async fn launch_chromedriver(
         &mut self,
         capabilities: &mut ChromeCapabilities,
+        chromedriver_output: bool,
         port: &str,
     ) -> anyhow::Result<()> {
         self.client = reqwest::Client::new();
@@ -125,28 +129,31 @@ impl Handler {
         let chromedriver_exe: PathBuf;
 
         if !self.package_downloaded() {
-            let (chrome_path, driver_path) = self.get_info().await?;
-
-            println!("{:?}, {:?}", chrome_path, driver_path);
+            let (chrome_path, driver_path) = self.get_info_and_download().await?;
 
             chrome_exe = chrome_path.join("chrome.exe");
             chromedriver_exe = driver_path.join("chromedriver.exe");
         } else {
             let (default_chrome_path, default_driver_path) = self.get_default_paths();
 
-            println!("{:?}, {:?}", default_chrome_path, default_driver_path);
-
             chrome_exe = default_chrome_path.join("chrome.exe");
             chromedriver_exe = default_driver_path.join("chromedriver.exe");
         }
 
-        println!("Launching chromedriver...");
-
         capabilities.set_binary(chrome_exe.to_str().unwrap())?;
 
-        Command::new(chromedriver_exe.to_str().unwrap())
-            .arg(format!("--port={}", port))
-            .spawn()?;
+
+        if chromedriver_output {
+            Command::new(chromedriver_exe.to_str().unwrap())
+                .arg(format!("--port={}", port))
+                .spawn()?;
+        } else {
+            Command::new(chromedriver_exe.to_str().unwrap())
+                .arg(format!("--port={}", port))
+                .stderr(std::process::Stdio::null())
+                .stdout(std::process::Stdio::null())
+                .spawn()?;
+        }
 
         Ok(())
     }
@@ -154,19 +161,22 @@ impl Handler {
 
 #[cfg(test)]
 mod tests {
-    use thirtyfour::prelude::*;
     use crate::manager::Handler;
+    use thirtyfour::prelude::*;
 
     #[tokio::test]
     async fn test_launch_chromedriver() -> anyhow::Result<()> {
-        let mut caps = DesiredCapabilities::chrome(); 
-    
+        let mut caps = DesiredCapabilities::chrome();
+
         Handler::new()
-            .launch_chromedriver(&mut caps, "9515") 
+            .launch_chromedriver(&mut caps, false, "9515")
             .await?;
-    
-        let driver = WebDriver::new("http://localhost:9515", caps).await?; 
-    
+
+        let driver = WebDriver::new("http://localhost:9515", caps).await?;
+        driver.goto("https://www.twitch.tv/").await?;
+
+        std::thread::sleep(std::time::Duration::from_secs(10));
+
         Ok(())
     }
 }

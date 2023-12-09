@@ -14,7 +14,7 @@ async fn main() -> anyhow::Result<()> {
 
     // Launch chromedriver on port 9515 
     Handler::new()
-        .launch_chromedriver(&mut caps, "9515") 
+        .launch_chromedriver(&mut caps, true, "9515") 
         .await?;
 
     // Connect to chrome on the same port
@@ -22,4 +22,10 @@ async fn main() -> anyhow::Result<()> {
 
     Ok(())
 }
+```
+
+### Todo
+```
+[+] Make platform compatable
+[+] Make auto updater + option to set version
 ```
