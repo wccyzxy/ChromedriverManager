@@ -32,9 +32,3 @@ async fn main() -> anyhow::Result<()> {
 [+] Make platform compatable
 [+] Make auto updater + option to set version
 ```
-
-### Todo
-```
-[+] Make platform compatable
-[+] Make auto updater + option to set version
-```
