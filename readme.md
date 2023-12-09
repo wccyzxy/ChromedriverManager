@@ -17,19 +17,17 @@ async fn main() -> anyhow::Result<()> {
     let mut caps = DesiredCapabilities::chrome(); 
 
     // Launch chromedriver on port 9515 
-    Handler::new()
+    let mut chromedriver = Handler::new()
         .launch_chromedriver(&mut caps, "9515", LogLevel::Off)
         .await?;
 
     // Connect to chrome on the same port
     let driver = WebDriver::new("http://localhost:9515", caps).await?; 
 
+    // Close the proccess after tasks are finished
+    chromedriver.kill()?
+
     Ok(())
 }
 ```
 
-## Todo
-```
-[+] Make platform compatable
-[+] Make auto updater + option to set version
-```

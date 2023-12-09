@@ -12,7 +12,12 @@ use crate::{
     loglevel::LogLevel,
 };
 
-use std::{os::windows::process::CommandExt, path::PathBuf, process::Command};
+/*
+    TODO: Make platform compatable
+    TODO: Make auto updater + option to set version
+*/
+
+use std::{os::windows::process::CommandExt, path::PathBuf, process::{Command, self}};
 use thirtyfour::ChromeCapabilities;
 
 const CHROME_DOWNLOADS_URL: &str =
@@ -20,13 +25,13 @@ const CHROME_DOWNLOADS_URL: &str =
 const PLATFORM: &str = "win64";
 
 pub struct Handler {
-    client: reqwest::Client,
+    client: reqwest::Client
 }
 
 impl Handler {
     pub fn new() -> Self {
         Self {
-            client: reqwest::Client::new(),
+            client: reqwest::Client::new()
         }
     }
 
@@ -76,25 +81,17 @@ impl Handler {
         Ok(latest_package)
     }
 
-    async fn download_files(
-        &self,
-        version: &Version,
-        chrome: &ChromeDownload,
-        driver: &DriverDownload,
-    ) -> anyhow::Result<()> {
-        println!(
-            "Installing chrome version {}.{}.{}.{}...\n",
-            version.major, version.minor, version.patch, version.build
-        );
+    // async fn download_files(
+    //     &self,
+    //     version: &Version,
+    //     chrome: &ChromeDownload,
+    //     driver: &DriverDownload,
+    // ) -> anyhow::Result<()> {
 
-        download_chrome(&self.client, chrome).await?;
-        print!("\n");
-        download_chromedriver(&self.client, driver).await?;
+    //     Ok(())
+    // }
 
-        Ok(())
-    }
-
-    async fn get_info_and_download(&self) -> anyhow::Result<(PathBuf, PathBuf)> {
+    async fn download_files(&self) -> anyhow::Result<(PathBuf, PathBuf)> {
         let chrome_packages = self.get_packages().await?;
         let selected_package = self.get_selected_package(&chrome_packages).await?;
 
@@ -107,12 +104,17 @@ impl Handler {
             .get_chromedriver_download(PLATFORM)
             .expect("Chromedriver download not found");
 
-        self.download_files(
-            &selected_package.version,
-            chrome_download,
-            chromedriver_download,
-        )
-        .await?;
+        // Download Chrome and Chromedriver
+
+        let version = &selected_package.version;
+        println!(
+            "Installing chrome version {}.{}.{}.{}...\n",
+            version.major, version.minor, version.patch, version.build
+        );
+
+        download_chrome(&self.client, chrome_download).await?;
+        print!("\n");
+        download_chromedriver(&self.client, chromedriver_download).await?;
 
         let chrome_path = chrome_download.to_folder_path();
         let driver_path = chromedriver_download.to_folder_path();
@@ -125,14 +127,14 @@ impl Handler {
         capabilities: &mut ChromeCapabilities,
         port: &str,
         loglevel: LogLevel,
-    ) -> anyhow::Result<()> {
+    ) -> Result<process::Child, anyhow::Error> {
         self.client = reqwest::Client::new();
 
         let chrome_exe: PathBuf;
         let chromedriver_exe: PathBuf;
 
         if !self.package_downloaded() {
-            let (chrome_path, driver_path) = self.get_info_and_download().await?;
+            let (chrome_path, driver_path) = self.download_files().await?;
 
             chrome_exe = chrome_path.join("chrome.exe");
             chromedriver_exe = driver_path.join("chromedriver.exe");
@@ -145,8 +147,6 @@ impl Handler {
 
         capabilities.set_binary(chrome_exe.to_str().unwrap())?;
 
-        // TODO: Make creation_flags only apply to Windows
-
         let chromedriver_exe = chromedriver_exe.to_str().unwrap();
 
         let mut command = Command::new(chromedriver_exe);
@@ -154,13 +154,12 @@ impl Handler {
             .arg(format!("--port={}", port))
             .arg(format!("--log-level={}", loglevel.to_string()));
 
-        // TODO: Make only available on Windows
+        // TODO: Make creation_flags only apply to Windows
         if loglevel == LogLevel::Off {
             command = command.creation_flags(0x08000000);
         }
 
-        command.spawn()?;
-        Ok(())
+        Ok(command.spawn()?)
     }
 }
 
@@ -174,7 +173,7 @@ mod tests {
         let mut caps = DesiredCapabilities::chrome();
         caps.set_headless()?;
 
-        Handler::new()
+        let mut chromedriver = Handler::new()
             .launch_chromedriver(&mut caps, "9515", LogLevel::Off)
             .await?;
 
@@ -183,6 +182,7 @@ mod tests {
 
         std::thread::sleep(std::time::Duration::from_secs(10));
 
+        chromedriver.kill()?;
         Ok(())
     }
 }
