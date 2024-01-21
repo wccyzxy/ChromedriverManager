@@ -1,49 +1,52 @@
-use crate::utils::{
-    appdata::get_cache_dir,
-    downloader::{download_chrome, download_chromedriver},
-    functions::get_latest_chrome_package,
-    version::Version,
-};
-use crate::{
-    structs::{
-        chrome::{ChromeDownload, DriverDownload},
-        packages::ChromePackage,
-    },
-    loglevel::LogLevel,
-};
-
 /*
     TODO: Make platform compatable
     TODO: Make auto updater + option to set version
 */
 
-use std::{os::windows::process::CommandExt, path::PathBuf, process::{Command, self}};
+use crate::utils::{
+    appdata::get_cache_dir,
+    downloader::{download_chrome, download_chromedriver},
+    functions::{get_latest_chrome_package, get_platform},
+};
+
+use crate::{
+    loglevel::LogLevel,
+    structs::{
+        chrome::{ChromeDownload, DriverDownload},
+        packages::ChromePackage,
+    },
+};
+
+use std::{
+    path::PathBuf,
+    process::{self, Command},
+};
+
 use thirtyfour::ChromeCapabilities;
 
 const CHROME_DOWNLOADS_URL: &str =
     "https://googlechromelabs.github.io/chrome-for-testing/known-good-versions-with-downloads.json";
-const PLATFORM: &str = "win64";
 
 pub struct Handler {
-    client: reqwest::Client
+    client: reqwest::Client,
+    platform: String,
 }
 
 impl Handler {
     pub fn new() -> Self {
         Self {
-            client: reqwest::Client::new()
+            client: reqwest::Client::new(),
+            platform: get_platform(),
         }
     }
 
-    // TODO: Make appdata configurable
     fn get_default_paths(&self) -> (PathBuf, PathBuf) {
-        let chrome_path = get_cache_dir().join("chrome-win64");
-        let driver_path = get_cache_dir().join("chromedriver-win64");
+        let chrome_path = get_cache_dir().join(format!("chrome-{}", self.platform));
+        let driver_path = get_cache_dir().join(format!("chromedriver-{}", self.platform));
 
         (chrome_path, driver_path)
     }
 
-    // TODO: Make platform configurable
     fn package_downloaded(&self) -> bool {
         let (chrome_path, driver_path) = self.get_default_paths();
 
@@ -81,27 +84,17 @@ impl Handler {
         Ok(latest_package)
     }
 
-    // async fn download_files(
-    //     &self,
-    //     version: &Version,
-    //     chrome: &ChromeDownload,
-    //     driver: &DriverDownload,
-    // ) -> anyhow::Result<()> {
-
-    //     Ok(())
-    // }
-
     async fn download_files(&self) -> anyhow::Result<(PathBuf, PathBuf)> {
         let chrome_packages = self.get_packages().await?;
         let selected_package = self.get_selected_package(&chrome_packages).await?;
 
         // TODO: Make platform configurable
         let chrome_download: &ChromeDownload = &selected_package
-            .get_chrome_download(PLATFORM)
+            .get_chrome_download(&self.platform)
             .expect("Chrome download not found");
 
         let chromedriver_download: &DriverDownload = &selected_package
-            .get_chromedriver_download(PLATFORM)
+            .get_chromedriver_download(&self.platform)
             .expect("Chromedriver download not found");
 
         // Download Chrome and Chromedriver
@@ -154,24 +147,39 @@ impl Handler {
             .arg(format!("--port={}", port))
             .arg(format!("--log-level={}", loglevel.to_string()));
 
-        // TODO: Make creation_flags only apply to Windows
+
         if loglevel == LogLevel::Off {
-            command = command.creation_flags(0x08000000);
+            // command = command.creation_flags(0x08000000);
+            command = self.apply_creation_flags(command);
         }
 
         Ok(command.spawn()?)
+    }
+
+    #[cfg(target_os = "windows")]
+    fn apply_creation_flags<'a>(&self, command: &'a mut Command) -> &'a mut Command {
+        use std::os::windows::process::CommandExt;
+
+        command.creation_flags(0x08000000)
+    }
+    
+    #[cfg(not(target_os = "windows"))]
+    fn apply_creation_flags(&self, command: Command) -> Command {
+        command
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{manager::Handler, loglevel::LogLevel};
+    use std::{thread, time::Duration};
+
+    use crate::{loglevel::LogLevel, manager::Handler};
     use thirtyfour::prelude::*;
 
     #[tokio::test]
     async fn test_launch_chromedriver() -> anyhow::Result<()> {
         let mut caps = DesiredCapabilities::chrome();
-        caps.set_headless()?;
+        // caps.set_headless()?;
 
         let mut chromedriver = Handler::new()
             .launch_chromedriver(&mut caps, "9515", LogLevel::Off)
@@ -180,7 +188,7 @@ mod tests {
         let driver = WebDriver::new("http://localhost:9515", caps).await?;
         driver.goto("https://www.gimkit.com/join").await?;
 
-        std::thread::sleep(std::time::Duration::from_secs(10));
+        thread::sleep(Duration::from_secs(10));
 
         chromedriver.kill()?;
         Ok(())

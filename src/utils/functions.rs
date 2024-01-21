@@ -1,7 +1,7 @@
 use crate::structs::packages::ChromePackage;
 use anyhow::{self, Ok};
 use indicatif::{ProgressBar, ProgressStyle};
-use std::{fs::File, io::Write};
+use std::{fs::File, io::Write, env::consts};
 
 pub fn get_latest_chrome_package(chrome_packages: &Vec<ChromePackage>) -> Option<ChromePackage> {
     let mut latest_package: Option<ChromePackage> = None;
@@ -51,4 +51,15 @@ pub async fn write_file(
     file.flush()?;
 
     Ok(())
+}
+
+pub fn get_platform() -> String {
+    let platform = match consts::OS {
+        "windows" => "win64",
+        "linux" => "linux64",
+        "macos" => "mac-x64",
+        _ => panic!("Unsupported OS"),
+    };
+
+    platform.to_string()
 }
