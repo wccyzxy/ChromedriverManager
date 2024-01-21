@@ -164,7 +164,7 @@ impl Handler {
     }
     
     #[cfg(not(target_os = "windows"))]
-    fn apply_creation_flags(&self, command: Command) -> Command {
+    fn apply_creation_flags<'a>(&self, command: &'a mut Command) -> &'a mut Command {
         command
     }
 }
