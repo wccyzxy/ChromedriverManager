@@ -22,6 +22,7 @@ use std::{
     process::{self, Command},
 };
 
+use anyhow::Ok;
 use thirtyfour::ChromeCapabilities;
 
 const CHROME_DOWNLOADS_URL: &str =
@@ -112,7 +113,26 @@ impl Handler {
         let chrome_path = chrome_download.to_folder_path();
         let driver_path = chromedriver_download.to_folder_path();
 
+        println!("Chrome path: {:?}", chrome_path);
+        println!("Chromedriver path: {:?}", driver_path);
+
         return Ok((chrome_path, driver_path));
+    }
+
+    // Return chrome.exe and chromedriver.exe if on windows, otherwise return chrome and chromedriver
+    fn get_file_names(&self) -> (String, String) {
+        let chrome_exe: String;
+        let chromedriver_exe: String;
+
+        if cfg!(target_os = "windows") {
+            chrome_exe = "chrome.exe".to_string();
+            chromedriver_exe = "chromedriver.exe".to_string();
+        } else {
+            chrome_exe = "chrome".to_string();
+            chromedriver_exe = "chromedriver".to_string();
+        }
+
+        (chrome_exe, chromedriver_exe)
     }
 
     pub async fn launch_chromedriver(
@@ -126,16 +146,18 @@ impl Handler {
         let chrome_exe: PathBuf;
         let chromedriver_exe: PathBuf;
 
+        let (chrome_exe_name, chromedriver_exe_name) = self.get_file_names();
+
         if !self.package_downloaded() {
             let (chrome_path, driver_path) = self.download_files().await?;
 
-            chrome_exe = chrome_path.join("chrome.exe");
-            chromedriver_exe = driver_path.join("chromedriver.exe");
+            chrome_exe = chrome_path.join(chrome_exe_name);
+            chromedriver_exe = driver_path.join(chromedriver_exe_name);
         } else {
             let (default_chrome_path, default_driver_path) = self.get_default_paths();
 
-            chrome_exe = default_chrome_path.join("chrome.exe");
-            chromedriver_exe = default_driver_path.join("chromedriver.exe");
+            chrome_exe = default_chrome_path.join(chrome_exe_name);
+            chromedriver_exe = default_driver_path.join(chromedriver_exe_name);
         }
 
         capabilities.set_binary(chrome_exe.to_str().unwrap())?;
@@ -185,7 +207,9 @@ mod tests {
             .launch_chromedriver(&mut caps, "9515", LogLevel::Off)
             .await?;
 
-        let driver = WebDriver::new("http://localhost:9515", caps).await?;
+        println!("Launched Chromedriver");
+
+        let driver = WebDriver::new("http://localhost:3093", caps).await?;
         driver.goto("https://www.gimkit.com/join").await?;
 
         thread::sleep(Duration::from_secs(10));
