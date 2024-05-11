@@ -25,7 +25,7 @@ async fn main() -> anyhow::Result<()> {
     let driver = WebDriver::new("http://localhost:9515", caps).await?; 
 
     // Close the proccess after tasks are finished
-    chromedriver.kill()?
+    chromedriver.kill()?;
 
     Ok(())
 }
