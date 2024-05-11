@@ -200,16 +200,16 @@ mod tests {
     #[tokio::test]
     async fn test_launch_chromedriver() -> anyhow::Result<()> {
         let mut caps = DesiredCapabilities::chrome();
-        // caps.set_headless()?;
+        caps.set_headless()?;
 
-        // Launch chromedriver on port 9515
+        // Launch chromedriver on port 3000
         let mut chromedriver = Handler::new()
-            .launch_chromedriver(&mut caps, "9515", LogLevel::Off)
+            .launch_chromedriver(&mut caps, "3000", LogLevel::Off)
             .await?;
 
         println!("Launched Chromedriver");
 
-        let driver = WebDriver::new("http://localhost:9515", caps).await?;
+        let driver = WebDriver::new("http://localhost:3000", caps).await?;
         driver.goto("https://www.gimkit.com/join").await?;
 
         thread::sleep(Duration::from_secs(10));
