@@ -1,7 +1,7 @@
 use crate::structs::packages::ChromePackage;
 use anyhow::{self, Ok};
 use indicatif::{ProgressBar, ProgressStyle};
-use std::{fs::File, io::Write, env::consts};
+use std::{env::consts, fs::File, io::Write};
 
 pub fn get_latest_chrome_package(chrome_packages: &Vec<ChromePackage>) -> Option<ChromePackage> {
     let mut latest_package: Option<ChromePackage> = None;

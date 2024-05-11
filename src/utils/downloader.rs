@@ -16,7 +16,12 @@ pub async fn download_chromedriver(
 
     let file = File::create(&driver_path)?;
 
-    write_file(&file, response, "Downloading Chromedriver...".to_string()).await?;
+    write_file(
+        &file,
+        response,
+        format!("Downloading Chromedriver ({})", chromedriver.url),
+    )
+    .await?;
 
     println!("Extracting Chromedriver...");
     zip_extract(&driver_path, &get_cache_dir()).unwrap();
@@ -38,7 +43,12 @@ pub async fn download_chrome(
 
     let file = File::create(&chrome_path)?;
 
-    write_file(&file, response, "Downloading Chrome".to_string()).await?;
+    write_file(
+        &file,
+        response,
+        format!("Downloading Chrome ({})", chrome.url),
+    )
+    .await?;
 
     println!("Extracting Chrome...");
     zip_extract(&chrome_path, &get_cache_dir()).unwrap();

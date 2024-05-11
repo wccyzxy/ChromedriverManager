@@ -169,7 +169,6 @@ impl Handler {
             .arg(format!("--port={}", port))
             .arg(format!("--log-level={}", loglevel.to_string()));
 
-
         if loglevel == LogLevel::Off {
             // command = command.creation_flags(0x08000000);
             command = self.apply_creation_flags(command);
@@ -184,7 +183,7 @@ impl Handler {
 
         command.creation_flags(0x08000000)
     }
-    
+
     #[cfg(not(target_os = "windows"))]
     fn apply_creation_flags<'a>(&self, command: &'a mut Command) -> &'a mut Command {
         command
@@ -203,13 +202,14 @@ mod tests {
         let mut caps = DesiredCapabilities::chrome();
         // caps.set_headless()?;
 
+        // Launch chromedriver on port 9515
         let mut chromedriver = Handler::new()
             .launch_chromedriver(&mut caps, "9515", LogLevel::Off)
             .await?;
 
         println!("Launched Chromedriver");
 
-        let driver = WebDriver::new("http://localhost:3093", caps).await?;
+        let driver = WebDriver::new("http://localhost:9515", caps).await?;
         driver.goto("https://www.gimkit.com/join").await?;
 
         thread::sleep(Duration::from_secs(10));
