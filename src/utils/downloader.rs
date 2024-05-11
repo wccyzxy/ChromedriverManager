@@ -26,7 +26,7 @@ pub async fn download_chromedriver(
     println!("Extracting Chromedriver...");
     zip_extract(&driver_path, &get_cache_dir()).unwrap();
 
-    println!("Completed Chromedriver Download");
+    println!("Completed Chromedriver Download ({})", chromedriver.url);
 
     // Delete zip file
     fs::remove_file(&driver_path).unwrap();
@@ -53,7 +53,7 @@ pub async fn download_chrome(
     println!("Extracting Chrome...");
     zip_extract(&chrome_path, &get_cache_dir()).unwrap();
 
-    println!("Completed Chrome Download");
+    println!("Completed Chrome Download ({})", chrome.url);
 
     // Delete zip file
     fs::remove_file(&chrome_path).unwrap();
