@@ -23,7 +23,7 @@ use std::{
 };
 
 use anyhow::Ok;
-use thirtyfour::ChromeCapabilities;
+use thirtyfour::{ChromeCapabilities, ChromiumLikeCapabilities};
 
 const CHROME_DOWNLOADS_URL: &str =
     "https://googlechromelabs.github.io/chrome-for-testing/known-good-versions-with-downloads.json";
