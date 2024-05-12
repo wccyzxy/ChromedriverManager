@@ -4,7 +4,7 @@ description = "A Rust library for downloading and managing ChromeDrivers."
 homepage = "https://github.com/Sw1ndlers/ChromedriverManager"
 keywords = ["chromedriver", "thirtyfour"]
 license = "MIT"
-version = "0.3.2"
+version = "0.3.3"
 edition = "2021"
 authors = ["Alex L"]
 
@@ -12,10 +12,10 @@ authors = ["Alex L"]
 anyhow = "1.0.75"
 indicatif = "0.17.7"
 platform-dirs = "0.3.0"
-reqwest = "0.11.22"
+reqwest = "0.12.4"
 serde = "1.0.193"
 serde_json = "1.0.108"
-thirtyfour = "0.31.0"
+thirtyfour = "0.32.0"
 zip-extensions = "0.6.2"
 
 [dev-dependencies]
