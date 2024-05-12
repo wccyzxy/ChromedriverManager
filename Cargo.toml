@@ -6,6 +6,7 @@ keywords = ["chromedriver", "thirtyfour"]
 license = "MIT"
 version = "0.3.2"
 edition = "2021"
+readme = "readme.md"
 authors = ["Alex L"]
 
 [dependencies]
